@@ -65,28 +65,28 @@ static task_result result;
 /// @param header
 /// @param data
 /// @param len
+
+#define MAX_BUF_SIZE 256 // Adjust the buffer size as necessary
+
+static unsigned char buf[MAX_BUF_SIZE];
+
 static void _send_BM1366(uint8_t header, uint8_t * data, uint8_t data_len, bool debug)
 {
     packet_type_t packet_type = (header & TYPE_JOB) ? JOB_PACKET : CMD_PACKET;
     uint8_t total_length = (packet_type == JOB_PACKET) ? (data_len + 6) : (data_len + 5);
 
-    // allocate memory for buffer
-    unsigned char * buf = malloc(total_length);
+    // Ensure we do not exceed the buffer size
+    if (total_length > MAX_BUF_SIZE) {
+        ESP_LOGE(TAG, "Data length exceeds buffer size!");
+        return;
+    }
 
-    // add the preamble
     buf[0] = 0x55;
     buf[1] = 0xAA;
-
-    // add the header field
     buf[2] = header;
-
-    // add the length field
     buf[3] = (packet_type == JOB_PACKET) ? (data_len + 4) : (data_len + 3);
-
-    // add the data
     memcpy(buf + 4, data, data_len);
 
-    // add the correct crc type
     if (packet_type == JOB_PACKET) {
         uint16_t crc16_total = crc16_false(buf + 2, data_len + 2);
         buf[4 + data_len] = (crc16_total >> 8) & 0xFF;
@@ -95,11 +95,9 @@ static void _send_BM1366(uint8_t header, uint8_t * data, uint8_t data_len, bool 
         buf[4 + data_len] = crc5(buf + 2, data_len + 2);
     }
 
-    // send serial data
     SERIAL_send(buf, total_length, debug);
-
-    free(buf);
 }
+
 
 static void _send_simple(uint8_t * data, uint8_t total_length)
 {
