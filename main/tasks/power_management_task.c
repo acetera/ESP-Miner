@@ -1,4 +1,3 @@
-#include "DS4432U.h"
 #include "EMC2101.h"
 #include "INA260.h"
 #include "bm1397.h"
@@ -84,7 +83,7 @@ void POWER_MANAGEMENT_task(void * pvParameters)
         }
         power_management->fan_speed = EMC2101_get_fan_speed();
 
-        if (strcmp(GLOBAL_STATE->asic_model, "BM1397") == 0) {
+        if (GLOBAL_STATE->asic_model == ASIC_BM1397) {
 
             power_management->chip_temp = EMC2101_get_external_temp();
 
@@ -144,7 +143,7 @@ void POWER_MANAGEMENT_task(void * pvParameters)
                     last_frequency_increase++;
                 }
             }
-        } else if (strcmp(GLOBAL_STATE->asic_model, "BM1366") == 0 || strcmp(GLOBAL_STATE->asic_model, "BM1368") == 0) {
+        } else if (GLOBAL_STATE->asic_model == ASIC_BM1366 || GLOBAL_STATE->asic_model == ASIC_BM1368) {
             power_management->chip_temp = EMC2101_get_internal_temp() + 5;
 
             if (power_management->chip_temp > THROTTLE_TEMP &&
